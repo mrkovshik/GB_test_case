@@ -16,8 +16,8 @@ const (
 	host     = "172.19.97.209" //впишите сюда параметры своей базы данных
 	port     = 5432
 	user     = "postgres"
-	password = "my_awesome_password"
-	dbname   = "my_awesome_DB"
+	password = "17pasHres19!"
+	dbname   = "vac_test"
 )
 
 func connectDB()*sql.DB{
@@ -40,7 +40,7 @@ func connectDB()*sql.DB{
 func showVacs (){
     db:=connectDB()
     defer db.Close()
-    rows, err := db.Query("SELECT * FROM vacancies")
+    rows, err := db.Query(" SELECT vacancies.id, vacancy_name, key_skills, salary, vacancy_desc, job_types.job_type FROM vacancies JOIN job_types ON vacancies.job_type = job_types.id;")
     if err != nil {
         panic(err.Error())
     }
@@ -48,9 +48,9 @@ func showVacs (){
     fmt.Println("ID    |   Vacancy Name   |  Key Skills                                          |  Vacancy Description                                                     |  Salary    |  Job Type")
     fmt.Println("-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
     for rows.Next() {
-        var id, salary, job_type int
-        var vacancy_name, key_skills,vacancy_desc string
-            err = rows.Scan(&id, &vacancy_name, &key_skills, &salary, &job_type, &vacancy_desc)
+        var id, salary int
+        var vacancy_name, key_skills,vacancy_desc, job_type string
+            err = rows.Scan(&id, &vacancy_name, &key_skills, &salary, &vacancy_desc, &job_type)
         if err != nil {
             panic(err.Error())
         }
@@ -101,7 +101,7 @@ fmt.Println(mainMenu)
 				showVacs()
 				fmt.Println("\n", mainMenu)
 			case scanner.Text()=="добавить":
-				fmt.Println("введите соответствующие значения строк, разделяя их знаком / (название вакансии, ключевые навыки, описание вакансии, зарплата, и код типа работы) или \"назад\" для выхода в предыдущее меню")
+				fmt.Println("введите соответствующие значения строк, разделяя их знаком \"/\" (название вакансии, ключевые навыки, описание вакансии, зарплата, и код типа работы: 1 для работы в офисе, 2 для удаленной работы и 3 для гибридной) или \"назад\" для выхода в предыдущее меню")
 				innerLoop:
 				for{
 					fmt.Print("> ")
