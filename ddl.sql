@@ -110,9 +110,9 @@ ALTER TABLE ONLY public.vacancies ALTER COLUMN id SET DEFAULT nextval('public.va
 --
 
 COPY public.job_types (id, job_type) FROM stdin;
-1	office
-2	distant
-3	hybrid
+1	в офисе
+2	дистанционно
+3	гибридный тип
 \.
 
 

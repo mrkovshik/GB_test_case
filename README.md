@@ -1,7 +1,26 @@
 # GB_test_case#
 ## тестовое задание для проекта Geek Brains ##
 
-Код написан на Go для базы данных PostgreSQL. 
+>1. Разработать приложение в консольном интерфейсе, которое запрашивает данные по 5 параметрам:
+>
+>- Наименование вакансии
+>
+>- Ключевые навыки
+>
+>- Описание
+>
+>- Зарплата
+>
+>- Вид работы (удаленный, смешанный, в офисе)
+>
+>2. Организовать запись в БД. (любая с которой работали)
+>
+>3. Организовать выдачу из БД по запросу названия вакансии (Запрос целиком, запрос из 5 букв)  
+  
+  ## Решение: ##  
+
+Код написан на Go для базы данных PostgreSQL.  
+
 При запуске бинарного файла для настройки соединения к базе данных укажите следующие флаги:
 - -h (адрес хоста, по умолчанию "localhost")
 - -u (DB user name, по умолчанию "postgres")
@@ -9,24 +28,7 @@
 - -p (DB password, по умолчанию "my_awesome_password")
 - -port (DB port, по умолчанию "5432")
 
-Для удобства ниже указан запрос для создания таблиц в PostgreSQL:
+Для удобства в репозитории лежит дамп базы данных с готовыми таблицами. 
 
-```
-CREATE TABLE job_types (id SERIAL PRIMARY KEY,
-                                          job_type text NOT NULL);
-
-
-CREATE TABLE vacancies (id SERIAL PRIMARY KEY,
-                                          vacancy_name text NOT NULL,
-                                                            key_skills text NOT NULL,
-                                                                            vacancy_desc text NOT NULL,
-                                                                                              salary integer NOT NULL,
-                                                                                                             job_type integer REFERENCES job_types(id));
-
-
-INSERT INTO job_types (job_type)
-VALUES ('В офисе'),
-       ('Удаленно'),
-       ('Гибридный');```
 
    
