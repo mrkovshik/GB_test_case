@@ -5,6 +5,8 @@
 -- Dumped from database version 14.6 (Ubuntu 14.6-1.pgdg22.04+1)
 -- Dumped by pg_dump version 15.1 (Ubuntu 15.1-1.pgdg22.04+1)
 
+
+
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
@@ -31,7 +33,7 @@ SET default_table_access_method = heap;
 -- Name: job_types; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.job_types (
+CREATE TABLE IF NOT EXISTS public.job_types (
     id integer NOT NULL,
     job_type text NOT NULL
 );
@@ -61,7 +63,7 @@ ALTER SEQUENCE public.job_types_id_seq OWNED BY public.job_types.id;
 -- Name: vacancies; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.vacancies (
+CREATE TABLE IF NOT EXISTS public.vacancies (
     id integer NOT NULL,
     vacancy_name text NOT NULL,
     key_skills text NOT NULL,

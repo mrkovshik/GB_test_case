@@ -9,10 +9,11 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"text/tabwriter"
 
 	_ "github.com/lib/pq"
 )
-
+var cred dbCred
 var mainMenu string = "\n*****************************\n - Если хотите посмотреть всю таблицу вакансий, наберите \"посмотреть\", \n - Если хотите найти вакансию по названию наберите \"найти\"\n - Если хотите добавить строку - наберите \"добавить\", \n - Если хотите выйти из программы, наберите \"выход\"\n*****************************\n"
 var searchQry string = " SELECT vacancies.id, vacancy_name, key_skills, salary, vacancy_desc, job_types.job_type FROM vacancies JOIN job_types ON vacancies.job_type = job_types.id WHERE vacancy_name ILIKE '%"
 var db *sql.DB
@@ -25,12 +26,14 @@ type dbCred struct {
 	dbName   string
 }
 
-type vacQery struct {
+type vacQuery struct {
+	ID int
 	vacName   string
 	keySkills string
 	vacDesc   string
 	salary    int
 	jobCode   int
+	jobType string
 }
 
 func connectDB(cred dbCred) (*sql.DB, error) {
@@ -68,42 +71,68 @@ func searchDialog() (string, bool) {
 		}
 	}
 }
-
-func showVacs(qry string, db *sql.DB) error {
+func loadVacs (qry string) ([] vacQuery, error) {
+	result:=[] vacQuery{}
 	rows, err := db.Query(qry)
 	if err != nil {
-		return err
+		return  result,err
 	}
 	defer rows.Close()
-	counter := 0
-	for rows.Next() {
-		counter++
-		var id, salary int
-		var vacancy_name, key_skills, vacancy_desc, job_type string
-		err = rows.Scan(&id, &vacancy_name, &key_skills, &salary, &vacancy_desc, &job_type)
+	for i:=0; rows.Next(); i++ {
+		result=append(result, vacQuery{})
+		err = rows.Scan(&result[i].ID, &result[i].vacName,&result[i].keySkills, &result[i].salary, &result[i].vacDesc, &result[i].jobType)
+		if err != nil {
+			return  result,err
+		}
+		err = rows.Err()
+	if err != nil {
+		return result, err
+	}
+}
+return  result,err
+}
+
+func showVacs(resSlice []vacQuery) error {
+
+	var counter int
+	var err error
+	const padding = 1
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, padding, ' ', tabwriter.AlignRight|tabwriter.Debug)
+	for i,line:= range resSlice {
+counter++
+			if i == 0 {
+			
+			_,err= fmt.Fprintln(w, "\tID\tНазвание вакансии\tКлючевые навыки\tОписание вакансии\tЗарплата\tТип работы\t")
+			if err != nil {
+				return err
+			}
+			_,err= fmt.Fprintln(w, "\t--\t-----------------\t------------------------------------------\t-----------------------------------------------------------------\t--------\t----------\t")
+			if err != nil {
+				return err
+			}
+		}
+		
+
+		_,err= fmt.Fprintf(w, "\t%v\t%v\t%v\t%v\t%v\t%v\t\n",line.ID, line.vacName, line.keySkills, line.vacDesc, line.salary, line.jobType)
 		if err != nil {
 			return err
 		}
-		if counter == 1 {
-			fmt.Println("ID    |   Vacancy Name   |  Key Skills                                          |  Vacancy Description                                                     |  Salary    |  Job Type")
-			fmt.Println("-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
-
+		_,err= fmt.Fprintln(w, "\t--\t-----------------\t------------------------------------------\t-----------------------------------------------------------------\t--------\t----------\t")
+		if err != nil {
+			return err
 		}
-		fmt.Printf("%-4v  |  %-14v  |  %-50v  |  %-70v  |  %-8v  |  %-10v\n", id, vacancy_name, key_skills, vacancy_desc, salary, job_type)
 	}
+	w.Flush()
 	if counter == 0 {
 		fmt.Println("\nПохоже, по такому запросу в базе ничего не нашлось. Попробуйте изменить запрос")
 		fmt.Println("----------------------------------------")
 		return err
 	}
-	err = rows.Err()
-	if err != nil {
-		return err
-	}
+	
 	return err
 }
-func insertDialog() (vacQery, bool) {
-	var result vacQery
+func insertDialog() (vacQuery, bool) {
+	var result vacQuery
 	var err error
 	fmt.Println("введите соответствующие значения строк, разделяя их знаком \"/\": ")
 	fmt.Println("название вакансии, ключевые навыки, описание вакансии, зарплата, и код типа работы: 1 для работы в офисе, 2 для удаленной работы и 3 для гибридной формы работы")
@@ -114,7 +143,7 @@ func insertDialog() (vacQery, bool) {
 		fmt.Print("> ")
 		if scanner.Scan() {
 			if scanner.Text() == "назад" {
-				return vacQery{}, false
+				return vacQuery{}, false
 			}
 
 			queryString := strings.Split(scanner.Text(), "/")
@@ -145,7 +174,7 @@ func insertDialog() (vacQery, bool) {
 
 	}
 }
-func insert(q vacQery, db *sql.DB) error {
+func insert(q vacQuery) error {
 	fmt.Println(q)
 	stmt, err := db.Prepare("INSERT INTO vacancies (vacancy_name,key_skills, vacancy_desc ,  salary, job_type) VALUES($1, $2,$3,$4,$5)")
 	if err != nil {
@@ -172,7 +201,12 @@ OuterLoop:
 		if scanner.Scan() {
 			switch {
 			case scanner.Text() == "посмотреть":
-				err := showVacs(searchQry+"%'", db)
+				res,err := loadVacs(searchQry+"%'")
+				if err != nil {
+					fmt.Println("Ошибка обращения к базе данных", err)
+					return err
+				}
+				err=showVacs(res)
 				if err != nil {
 					fmt.Println("Ошибка обращения к базе данных", err)
 					return err
@@ -181,17 +215,22 @@ OuterLoop:
 			case scanner.Text() == "найти":
 				keyWord, proceed := searchDialog()
 				if proceed {
-					err := showVacs(searchQry+keyWord+"%'", db)
-					if err != nil {
-						fmt.Println("Ошибка обращения к базе данных", err)
-						return err
-					}
+					res,err := loadVacs(searchQry+keyWord+"%'")
+				if err != nil {
+					fmt.Println("Ошибка обращения к базе данных", err)
+					return err
+				}
+				err=showVacs(res)
+				if err != nil {
+					fmt.Println("Ошибка обращения к базе данных", err)
+					return err
+				}
 				}
 				fmt.Println(mainMenu)
 			case scanner.Text() == "добавить":
 				query, proceed := insertDialog()
 				if proceed {
-					err := insert(query, db)
+					err := insert(query)
 					if err != nil {
 						fmt.Println("Ошибка внесения данных в таблицу", err)
 						return err
@@ -209,15 +248,15 @@ OuterLoop:
 	return nil
 }
 func main() {
-	var err error
-	var cred dbCred
+	var err error	
 	flag.IntVar(&cred.port, "port", 5432, "Port for DB connection")
 	flag.StringVar(&cred.host, "h", "localhost", "DB host IP")
 	flag.StringVar(&cred.password, "p", "my_awesome_password", "DB connection password")
 	flag.StringVar(&cred.user, "u", "postgres", "DB connection user name")
 	flag.StringVar(&cred.dbName, "n", "vacancies", "DB name")
-
+flag.Parse()
 	db, err = connectDB(cred)
+
 	if err != nil {
 		fmt.Println("Ошибка подключения базы данных", err)
 		return
