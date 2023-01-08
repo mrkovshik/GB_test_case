@@ -175,7 +175,7 @@ func insertDialog() (vacQuery, bool) {
 	}
 }
 func insert(q vacQuery) error {
-	fmt.Println(q)
+	
 	stmt, err := db.Prepare("INSERT INTO vacancies (vacancy_name,key_skills, vacancy_desc ,  salary, job_type) VALUES($1, $2,$3,$4,$5)")
 	if err != nil {
 		return err
@@ -232,7 +232,7 @@ OuterLoop:
 				if proceed {
 					err := insert(query)
 					if err != nil {
-						fmt.Println("Ошибка внесения данных в таблицу", err)
+						fmt.Println("Ошибка внесения данных в таблицу, попробуйте еще раз", err)
 						return err
 					}
 				}
@@ -262,6 +262,9 @@ flag.Parse()
 		return
 	}
 	defer db.Close()
-	mainDialog()
+	err=mainDialog()
+	if err!=nil{
+		fmt.Println(err)
+	}
 
 }

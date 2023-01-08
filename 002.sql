@@ -140,7 +140,7 @@ SELECT pg_catalog.setval('public.job_types_id_seq', 3, true);
 -- Name: vacancies_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.vacancies_id_seq', 10, true);
+SELECT pg_catalog.setval('public.vacancies_id_seq', 4, true);
 
 
 --
